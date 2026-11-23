@@ -1,21 +1,34 @@
 package config;
 
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.util.Properties;
 
 public class ConexionBD {
-
-    private static final String URL = "jdbc:mysql://localhost:3306/agrofinca_la_cumbre?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
-    private static final String USER = "root";
-    private static final String PASSWORD = "1995"; // <--- Cambia esto por tu clave de MySQL Workbench
-
-    public static Connection obtenerConexion() throws SQLException {
-        try {
+    
+    public static Connection getConexion() {
+        Connection con = null;
+        try (InputStream input = ConexionBD.class.getResourceAsStream("db.properties")) {
+            Properties prop = new Properties();
+            if (input == null) {
+                System.out.println("Error: No se encontró el archivo db.properties dentro del paquete config");
+                return null;
+            }
+            prop.load(input);
+            
+            // Cargar el driver de MySQL
             Class.forName("com.mysql.cj.jdbc.Driver");
-            return DriverManager.getConnection(URL, USER, PASSWORD);
-        } catch (ClassNotFoundException e) {
-            throw new SQLException("Driver JDBC de MySQL no encontrado", e);
+            
+            // Establecer conexión
+            con = DriverManager.getConnection(
+                prop.getProperty("db.url"),
+                prop.getProperty("db.user"),
+                prop.getProperty("db.password")
+            );
+        } catch (Exception e) {
+            System.out.println("Error al conectar con la base de datos: " + e.getMessage());
         }
+        return con;
     }
 }
